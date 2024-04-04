@@ -139,6 +139,14 @@ export interface ScanOptions {
    * https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setDeviceName(java.lang.String)
    */
   exactAdvertisingName?: string|string[];
+
+  /**
+   * an android ScanFilter, used if present to restrict scan results to devices with with null as a device name.
+   * if `callbackType` is set to `AllMatches`, only the completeLocalName will be used for filtering.
+   * if `callbackType` is set to `FirstMatch`, the shortenedLocalName will be used for filtering.
+   * https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setDeviceName(java.lang.String)
+   */
+  emptyDeviceName?: boolean;
   /**
    * Android only. Filters scan results by manufacturer id and data.
    * `manufacturerId` usually matches the company id, can be given as a hex, e.g. 0xe4f7.

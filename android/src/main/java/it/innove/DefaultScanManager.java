@@ -107,6 +107,11 @@ public class DefaultScanManager extends ScanManager {
             }
         }
 
+        if (options.hasKey("emptyDeviceName") && options.getBoolean("emptyDeviceName")) {
+            ScanFilter filter = new ScanFilter.Builder().setDeviceName(null).build();
+            filters.add(filter);
+        }
+
         if (options.hasKey("manufacturerData")) {
             ReadableMap manufacturerDataMap = options.getMap("manufacturerData");
             if (manufacturerDataMap != null && manufacturerDataMap.hasKey("manufacturerId")) {

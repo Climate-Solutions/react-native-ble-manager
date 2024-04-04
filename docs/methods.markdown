@@ -55,6 +55,7 @@ Returns a `Promise` object.
   - `phy` - `Number` - [Android only] corresponding to [`setPhy`](<https://developer.android.com/reference/android/bluetooth/le/ScanSettings.Builder#setPhy(int)>)
   - `legacy` - `Boolean` - [Android only] corresponding to [`setLegacy`](<https://developer.android.com/reference/android/bluetooth/le/ScanSettings.Builder#setLegacy(boolean)>)
   - `exactAdvertisingName` - `string[]` - In Android corresponds to the `ScanFilter` [deviceName](<https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setDeviceName(java.lang.String)>). In iOS the filter is done manually before sending the peripheral.
+  - `emptyDeviceName` - `Boolean` - [Android only] Uses the `ScanFilter` [deviceName](<https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setDeviceName(java.lang.String)>) to filter devices with null as a device name.
   - `manufacturerData` - `object` - [Android only] corresponding to [`setManufacturerData`](<https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setManufacturerData(int,%20byte[],%20byte[])>). Filter by manufacturer id or data.
     - `manufacturerId` - `number` - Manufacturer / company id to filter for.
     - `manufacturerData` - `number[]` - Additional manufacturer data filter.
@@ -490,7 +491,7 @@ BleManager.writeDescriptor(
   [1, 2]
 )
   .then(() => {
-    // Success code    
+    // Success code
   })
   .catch((error) => {
     // Failure code
