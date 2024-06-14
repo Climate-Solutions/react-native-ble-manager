@@ -34,6 +34,7 @@ import java.util.List;
 public class DefaultScanManager extends ScanManager {
 
     private boolean isScanning = false;
+    private ReadableMap options;
 
     public DefaultScanManager(ReactApplicationContext reactContext, BleManager bleManager) {
         super(reactContext, bleManager);
@@ -54,6 +55,7 @@ public class DefaultScanManager extends ScanManager {
     public void scan(ReadableArray serviceUUIDs, final int scanSeconds, ReadableMap options, Callback callback) {
         ScanSettings.Builder scanSettingsBuilder = new ScanSettings.Builder();
         List<ScanFilter> filters = new ArrayList<>();
+        this.options = options;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && options.hasKey("legacy")) {
             scanSettingsBuilder.setLegacy(options.getBoolean("legacy"));
@@ -110,15 +112,6 @@ public class DefaultScanManager extends ScanManager {
         if (options.hasKey("emptyDeviceName") && options.getBoolean("emptyDeviceName")) {
             ScanFilter filter = new ScanFilter.Builder().setDeviceName(null).build();
             filters.add(filter);
-        }
-
-        if (options.hasKey("deviceAddress")) {
-            ArrayList<Object> deviceAddresses = options.getArray("deviceAddress").toArrayList();
-            Log.d(BleManager.LOG_TAG, "Filter on device addresses: " + deviceAddresses);
-            for (Object address : deviceAddresses) {
-                ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(address.toString()).build();
-                filters.add(filter);
-            }
         }
 
         if (options.hasKey("manufacturerData")) {
@@ -206,7 +199,18 @@ public class DefaultScanManager extends ScanManager {
         callback.invoke();
     }
 
+    private boolean hasValidDeviceAddress(final ScanResult result){
+        if(!this.options.hasKey("deviceAddress")) return true;
+        ArrayList<Object> deviceAddresses = this.options.getArray("deviceAddress").toArrayList();
+        for (Object address : deviceAddresses) {
+            if(result.getDevice().getAddress().startsWith(address.toString())) return true;
+        }
+        return false;
+    }
+
     private void onDiscoveredPeripheral(final ScanResult result) {
+        if(!hasValidDeviceAddress(result)) return;
+
         String info;
         ScanRecord record = result.getScanRecord();
 
