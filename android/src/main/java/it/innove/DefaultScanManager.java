@@ -114,7 +114,7 @@ public class DefaultScanManager extends ScanManager {
 
         if (options.hasKey("deviceAddress")) {
             ArrayList<Object> deviceAddresses = options.getArray("deviceAddress").toArrayList();
-            Log.d(BleManager.LOG_TAG, "Filter on device addresses: " + deviceAddresses;
+            Log.d(BleManager.LOG_TAG, "Filter on device addresses: " + deviceAddresses);
             for (Object address : deviceAddresses) {
                 ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(address.toString()).build();
                 filters.add(filter);
