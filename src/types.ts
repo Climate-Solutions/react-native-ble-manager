@@ -131,6 +131,12 @@ export interface ScanOptions {
    */
   legacy?: boolean;
   /**
+   * an android ScanFilter, used if present to restrict scan results to devices with a specific mac address.
+   * This is a whole word match, not a partial search.
+   * https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setDeviceAddress(java.lang.String)
+   */
+  deviceAddress?: string | string[];
+  /**
    * an android ScanFilter, used if present to restrict scan results to devices with a specific advertising name.
    * This is a whole word match, not a partial search.
    * Use with caution, it's behavior is tricky and seems to be the following:
@@ -138,8 +144,7 @@ export interface ScanOptions {
    * if `callbackType` is set to `FirstMatch`, the shortenedLocalName will be used for filtering.
    * https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setDeviceName(java.lang.String)
    */
-  exactAdvertisingName?: string|string[];
-
+  exactAdvertisingName?: string | string[];
   /**
    * an android ScanFilter, used if present to restrict scan results to devices with with null as a device name.
    * if `callbackType` is set to `AllMatches`, only the completeLocalName will be used for filtering.

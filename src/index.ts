@@ -473,6 +473,18 @@ class BleManager extends NativeEventEmitter {
         }
       }
 
+      // In Android ScanFilter used to restrict search to devices with a specific device address.
+      // https://developer.android.com/reference/android/bluetooth/le/ScanFilter.Builder#setDeviceAddress(java.lang.String)
+      if (!scanningOptions.deviceAddress) {
+        delete scanningOptions.deviceAddress;
+      } else {
+        if (typeof scanningOptions.deviceAddress === "string") {
+          scanningOptions.deviceAddress = [
+            scanningOptions.deviceAddress,
+          ];
+        }
+      }
+
       bleManager.scan(
         serviceUUIDs,
         seconds,
