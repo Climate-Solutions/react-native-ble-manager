@@ -209,8 +209,6 @@ public class DefaultScanManager extends ScanManager {
     }
 
     private void onDiscoveredPeripheral(final ScanResult result) {
-        if(!hasValidDeviceAddress(result)) return;
-
         String info;
         ScanRecord record = result.getScanRecord();
 
@@ -240,6 +238,7 @@ public class DefaultScanManager extends ScanManager {
     private final ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(final int callbackType, final ScanResult result) {
+            if(!hasValidDeviceAddress(result)) return;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
