@@ -249,14 +249,14 @@ public class DefaultScanManager extends ScanManager {
 
         @Override
         public void onBatchScanResults(final List<ScanResult> results) {
+            List<ScanResult> validResults = results.stream().filter(result -> hasValidDeviceAddress(result)).toList();
+            if (validResults.isEmpty()) {
+                return;
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (results.isEmpty()) {
-                        return;
-                    }
-
-                    for (ScanResult result : results) {
+                    for (ScanResult result : validResults) {
                         onDiscoveredPeripheral(result);
                     }
                 }
