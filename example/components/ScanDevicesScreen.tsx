@@ -2,7 +2,7 @@
  * Sample BLE React Native App
  */
 
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -18,7 +18,7 @@ import {
   Pressable,
 } from 'react-native';
 
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { useNavigation } from '@react-navigation/native';
 
 import BleManager, {
@@ -28,6 +28,7 @@ import BleManager, {
   BleScanMatchMode,
   BleScanMode,
   Peripheral,
+  PeripheralInfo,
 } from 'react-native-ble-manager';
 
 const SECONDS_TO_SCAN_FOR = 3;
@@ -80,6 +81,36 @@ const ScanDevicesScreen = () => {
     }
   };
 
+  const startCompanionScan = () => {
+    setPeripherals(new Map<Peripheral['id'], Peripheral>());
+    try {
+      console.debug('[startCompanionScan] starting companion scan...');
+      BleManager.companionScan(SERVICE_UUIDS, { single: false })
+        .then((peripheral: Peripheral|null) => {
+          console.debug('[startCompanionScan] scan promise returned successfully.', peripheral);
+          if (peripheral != null) {
+            setPeripherals(map => {
+              return new Map(map.set(peripheral.id, peripheral));
+            });
+          }
+        })
+        .catch((err: any) => {
+          console.debug('[startCompanionScan] ble scan cancel', err);
+        });
+    } catch (error) {
+      console.error('[startCompanionScan] ble scan error thrown', error);
+    }
+  }
+
+  const enableBluetooth = async () => {
+    try {
+      console.debug('[enableBluetooth]');
+      await BleManager.enableBluetooth();
+    } catch (error) {
+      console.error('[enableBluetooth] thrown', error);
+    }
+  }
+  
   const handleStopScan = () => {
     setIsScanning(false);
     console.debug('[handleStopScan] scan is stopped.');
@@ -147,12 +178,11 @@ const ScanDevicesScreen = () => {
       }
 
       console.debug(
-        '[retrieveConnected] connectedPeripherals',
+        '[retrieveConnected]', connectedPeripherals.length, 'connectedPeripherals',
         connectedPeripherals,
       );
 
-      for (var i = 0; i < connectedPeripherals.length; i++) {
-        var peripheral = connectedPeripherals[i];
+      for (let peripheral of connectedPeripherals) {
         setPeripherals(map => {
           let p = map.get(peripheral.id);
           if (p) {
@@ -169,6 +199,53 @@ const ScanDevicesScreen = () => {
       );
     }
   };
+
+  const retrieveServices = async () => {
+    const peripheralInfos: PeripheralInfo[] = [];
+    for (let [peripheralId, peripheral] of peripherals) {
+      if (peripheral.connected) {
+        const newPeripheralInfo = await BleManager.retrieveServices(peripheralId);
+        peripheralInfos.push(newPeripheralInfo);
+      }
+    }
+    return peripheralInfos;
+  };
+
+  const readCharacteristics = async () => {
+    let services = await retrieveServices();
+
+    for (let peripheralInfo of services) {
+      peripheralInfo.characteristics?.forEach(async c => {
+        try {
+          const value = await BleManager.read(peripheralInfo.id, c.service, c.characteristic);
+          console.log("[readCharacteristics]", "peripheralId", peripheralInfo.id, "service", c.service, "char", c.characteristic, "\n\tvalue", value);
+        } catch (error) {
+          console.error("[readCharacteristics]", "Error reading characteristic", error);
+        }
+      });
+    }
+  }
+
+  const getAssociatedPeripherals = async () => {
+    try {
+      const associatedPeripherals = await BleManager.getAssociatedPeripherals();
+      console.debug(
+        '[getAssociatedPeripherals] associatedPeripherals',
+        associatedPeripherals,
+      );
+
+      for (let peripheral of associatedPeripherals) {
+        setPeripherals(map => {
+          return new Map(map.set(peripheral.id, peripheral));
+        });
+      }
+    } catch (error) {
+      console.error(
+        '[getAssociatedPeripherals] unable to retrieve associated peripherals.',
+        error,
+      );
+    }
+  }
 
   const connectPeripheral = async (peripheral: Peripheral) => {
     try {
@@ -252,12 +329,11 @@ const ScanDevicesScreen = () => {
           }
           return map;
         });
-        
-        navigation.navigate('PeripheralDetails', {peripheralData: peripheralData});
+
+        navigation.navigate('PeripheralDetails', {
+          peripheralData: peripheralData,
+        });
       }
-    
-      
-    
     } catch (error) {
       console.error(
         `[connectPeripheral][${peripheral.id}] connectPeripheral error`,
@@ -272,7 +348,7 @@ const ScanDevicesScreen = () => {
 
   useEffect(() => {
     try {
-      BleManager.start({showAlert: false})
+      BleManager.start({ showAlert: false })
         .then(() => console.debug('BleManager started.'))
         .catch((error: any) =>
           console.error('BeManager could not be started.', error),
@@ -356,13 +432,13 @@ const ScanDevicesScreen = () => {
     }
   };
 
-  const renderItem = ({item}: {item: Peripheral}) => {
+  const renderItem = ({ item }: { item: Peripheral }) => {
     const backgroundColor = item.connected ? '#069400' : Colors.white;
     return (
       <TouchableHighlight
         underlayColor="#0082FC"
         onPress={() => togglePeripheralConnection(item)}>
-        <View style={[styles.row, {backgroundColor}]}>
+        <View style={[styles.row, { backgroundColor }]}>
           <Text style={styles.peripheralName}>
             {/* completeLocalName (item.name) & shortAdvertisingName (advertising.localName) may not always be the same */}
             {item.name} - {item?.advertising?.localName}
@@ -379,17 +455,50 @@ const ScanDevicesScreen = () => {
     <>
       <StatusBar />
       <SafeAreaView style={styles.body}>
-        <Pressable style={styles.scanButton} onPress={startScan}>
-          <Text style={styles.scanButtonText}>
-            {isScanning ? 'Scanning...' : 'Scan Bluetooth'}
-          </Text>
-        </Pressable>
+        <View style={styles.buttonGroup}>
+          <Pressable style={styles.scanButton} onPress={startScan}>
+            <Text style={styles.scanButtonText}>
+              {isScanning ? 'Scanning...' : 'Scan Bluetooth'}
+            </Text>
+          </Pressable>
 
-        <Pressable style={styles.scanButton} onPress={retrieveConnected}>
-          <Text style={styles.scanButtonText}>
-            {'Retrieve connected peripherals'}
-          </Text>
-        </Pressable>
+          <Pressable style={styles.scanButton} onPress={retrieveConnected}>
+            <Text style={styles.scanButtonText} lineBreakMode='middle'>
+              {'Retrieve connected peripherals'}
+            </Text>
+          </Pressable>
+
+          <Pressable style={styles.scanButton} onPress={readCharacteristics}>
+            <Text style={styles.scanButtonText}>Read characteristics</Text>
+          </Pressable>
+        </View>
+
+        {Platform.OS === 'android' &&
+          (
+            <>
+              <View style={styles.buttonGroup}>
+                <Pressable style={styles.scanButton} onPress={startCompanionScan}>
+                  <Text style={styles.scanButtonText}>
+                    {'Scan Companion'}
+                  </Text>
+                </Pressable>
+
+                <Pressable style={styles.scanButton} onPress={getAssociatedPeripherals}>
+                  <Text style={styles.scanButtonText}>
+                    {'Get Associated Peripherals'}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.buttonGroup}>
+                <Pressable style={styles.scanButton} onPress={enableBluetooth}>
+                  <Text style={styles.scanButtonText}>
+                    {'Enable Bluetooh'}
+                  </Text>
+                </Pressable>                
+              </View>
+            </>
+          )}
 
         {Array.from(peripherals.values()).length === 0 && (
           <View style={styles.row}>
@@ -399,9 +508,10 @@ const ScanDevicesScreen = () => {
           </View>
         )}
 
+
         <FlatList
           data={Array.from(peripherals.values())}
-          contentContainerStyle={{rowGap: 12}}
+          contentContainerStyle={{ rowGap: 12 }}
           renderItem={renderItem}
           keyExtractor={item => item.id}
         />
@@ -428,17 +538,23 @@ const styles = StyleSheet.create({
     bottom: 0,
     color: Colors.black,
   },
+  buttonGroup: {
+    flexDirection: 'row',
+    width: '100%'
+  },
   scanButton: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
+    paddingHorizontal: 16,
     backgroundColor: '#0a398a',
     margin: 10,
     borderRadius: 12,
+    flex: 1,
     ...boxShadow,
   },
   scanButtonText: {
-    fontSize: 20,
+    fontSize: 16,
     letterSpacing: 0.25,
     color: Colors.white,
   },

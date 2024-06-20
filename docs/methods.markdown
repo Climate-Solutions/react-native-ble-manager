@@ -89,6 +89,38 @@ BleManager.stopScan().then(() => {
 
 ---
 
+## companionScan() [Android only, API 26+]
+
+Scan for companion devices.
+
+If companion device manger is not supported on this (android) device rejects.
+
+The promise it will eventually resolve with either:
+
+1.  peripheral if user selects one
+2.  null if user "cancels" (i.e. doesn't select anything)
+
+See `BleManager.supportsCompanion`.
+
+See: https://developer.android.com/develop/connectivity/bluetooth/companion-device-pairing
+
+**Arguments**
+
+- `serviceUUIDs` - `String[]` - List of service UUIDs to use as a filter
+- `options` - `JSON` - Additional options
+
+  - `single` - `String?` - Scan only for single peripheral. See Android's `AssocationRequest.Builder.setSingleDevice`.
+
+**Examples**
+
+```js
+BleManager.compationScan([]).then(peripheral => {
+  console.log('Associated peripheral', peripheral);
+});
+```
+
+---
+
 ## connect(peripheralId, options)
 
 Attempts to connect to a peripheral. In many case if you can't connect you have to scan for the peripheral before.
@@ -185,6 +217,12 @@ BleManager.checkState().then((state) =>
   console.log(`current BLE state = '${state}'.`)
 );
 ```
+
+---
+
+## supportsCompanion() [Android only]
+
+Check if current device supports companion device manager.
 
 ---
 
@@ -620,6 +658,24 @@ BleManager.getConnectedPeripherals([]).then((peripheralsArray) => {
   console.log("Connected peripherals: " + peripheralsArray.length);
 });
 ```
+
+---
+
+## getAssociatedPeripherals() [Android only, API 26+]
+
+Retrive associated peripherals (from companion manager).
+
+---
+
+## removeAssociatedPeripheral(peripheralId) [Android only, API 26+]
+
+Remove a associated peripheral.
+
+Rejects if no association is found.
+
+**Arguments**
+
+- `peripheralId` - `String` - Peripheral to remove
 
 ---
 

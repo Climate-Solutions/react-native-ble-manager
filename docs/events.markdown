@@ -172,3 +172,24 @@ The peripheral received a request to start or stop providing notifications for a
 - `isNotifying` - `Boolean` - Is the characteristic notifying or not
 - `domain` - `String` - [iOS only] error domain
 - `code` - `Number` - [iOS only] error code
+
+---
+
+## BleManagerCompanionPeripheral [Android only]
+
+User picked a device to associate with.
+
+Null if the request was cancelled by the user.
+
+**Arguments**
+
+- `id` - `String` - the id of the peripheral
+- `name` - `String` - the name of the peripheral
+- `rssi` - `Number` - the RSSI value
+
+---
+
+## BleManagerCompanionFailure [Android only]
+
+Associate callback received a failure or failed to start the intent to
+pick the device to associate.
