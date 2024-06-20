@@ -122,14 +122,17 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
     // Helper method to call the callbacks for a specific peripheral and clear the queue
     func invokeAndClearDictionary(_ dictionary: inout Dictionary<String, [RCTResponseSenderBlock]>, withKey key: String, usingParameters parameters: [Any]) {
         serialQueue.sync {
-            
-            if let peripheralCallbacks = dictionary[key] {
-                for callback in peripheralCallbacks {
-                    callback(parameters)
-                }
-                
-                dictionary.removeValue(forKey: key)
+            invokeAndClearDictionary_THREAD_UNSAFE(&dictionary, withKey: key, usingParameters: parameters)
+        }
+    }
+
+    func invokeAndClearDictionary_THREAD_UNSAFE(_ dictionary: inout Dictionary<String, [RCTResponseSenderBlock]>, withKey key: String, usingParameters parameters: [Any]) {
+        if let peripheralCallbacks = dictionary[key] {
+            for callback in peripheralCallbacks {
+                callback(parameters)
             }
+            
+            dictionary.removeValue(forKey: key)
         }
     }
     
@@ -553,7 +556,7 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
                      maxByteSize: Int,
                      callback: @escaping RCTResponseSenderBlock) {
         NSLog("write")
-                
+        
         guard let context = getContext(peripheralUUID, serviceUUIDString: serviceUUID, characteristicUUIDString: characteristicUUID, prop: CBCharacteristicProperties.write, callback: callback) else {
             return
         }
@@ -1078,16 +1081,18 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
             NSLog("Read value [\(characteristic.uuid)]: \( value.hexadecimalString())")
         }
         
-        if readCallbacks[key] != nil {
-            invokeAndClearDictionary(&readCallbacks, withKey: key, usingParameters: [NSNull(), characteristic.value!.toArray()])
-        } else {
-            if hasListeners {
-                sendEvent(withName: "BleManagerDidUpdateValueForCharacteristic", body: [
-                    "peripheral": peripheral.uuidAsString(),
-                    "characteristic": characteristic.uuid.uuidString.lowercased(),
-                    "service": characteristic.service!.uuid.uuidString.lowercased(),
-                    "value": characteristic.value!.toArray()
-                ])
+        serialQueue.sync {
+            if readCallbacks[key] != nil {
+                invokeAndClearDictionary_THREAD_UNSAFE(&readCallbacks, withKey: key, usingParameters: [NSNull(), characteristic.value!.toArray()])
+            } else {
+                if hasListeners {
+                    sendEvent(withName: "BleManagerDidUpdateValueForCharacteristic", body: [
+                        "peripheral": peripheral.uuidAsString(),
+                        "characteristic": characteristic.uuid.uuidString.lowercased(),
+                        "service": characteristic.service!.uuid.uuidString.lowercased(),
+                        "value": characteristic.value!.toArray()
+                    ])
+                }
             }
         }
     }
@@ -1239,6 +1244,24 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
     
     @objc func setName(_ name: String,
                        callback: @escaping RCTResponseSenderBlock) {
+        callback(["Not supported"])
+    }
+    
+    @objc func getAssociatedPeripherals(_ callback: @escaping RCTResponseSenderBlock) {
+        callback(["Not supported"])
+    }
+    
+    @objc func removeAssociatedPeripheral(_ peripheralUUID: String,
+                                          callback: @escaping RCTResponseSenderBlock) {
+        callback(["Not supported"])
+    }
+    
+    @objc func supportsCompanion(_ callback: @escaping RCTResponseSenderBlock) {
+        callback(["Not supported"])
+    }
+    
+    @objc public func companionScan(_ serviceUUIDs: [Any],
+                                    callback:RCTResponseSenderBlock) {
         callback(["Not supported"])
     }
 }
